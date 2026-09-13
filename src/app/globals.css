@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+/* Inter */
+@font-face {
+  font-family: "Inter";
+  src: url(/fonts/inter-regular.woff2) format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url(/fonts/inter-bold.woff2) format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Manrope */
+@font-face {
+  font-family: "Manrope";
+  src: url(/fonts/manrope-regular.woff2) format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url(/fonts/manrope-bold.woff2) format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --background: #faf7f2;
+  --foreground: #2c3e50;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-mint: #5ec9a0;
+  --color-mint-light: #7dd8b5;
+  --color-mint-dark: #4ab088;
+  --color-brand-green: #5EC9A0;
+  --color-brand-dark: #1F1F1F;
+  --color-brand-light: #F9F9F9;
+  --color-brand-textDark: #333333;
+  --color-brand-textLight: #E0E0E0;
+  --color-amber: #f5a623;
+  --color-amber-light: #ffb94d;
+  --color-amber-dark: #e09515;
+  --color-cream: #faf7f2;
+  --color-graphite: #2c3e50;
+  --font-heading: "Manrope", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-sans: "Inter", sans-serif;
+}
+
+@utility font-manrope {
+  font-family: "Manrope", sans-serif;
+}
+
+@utility font-inter {
+  font-family: "Inter", sans-serif;
+}
+
+@layer base {
+  body {
+    font-family: "Inter", sans-serif;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Manrope", sans-serif;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes booking-highlight {
+  0% {
+    background-color: #ffb94d;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.booking-row-new {
+  animation: booking-highlight 8s ease-out;
+  background-color: #ffb94d;
+}
