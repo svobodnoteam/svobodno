@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { MouseEvent, useEffect, useRef, useState } from "react";
 
 const BETA_EMAIL = "svobodno.app.team@yandex.com";
+const MAILTO_HREF = `mailto:${BETA_EMAIL}?subject=Заявка на бета-доступ&body=Привет! Хочу получить доступ к бета-версии Svobodno.`;
 
 export function BetaButton() {
   const [visible, setVisible] = useState(false);
@@ -38,8 +39,9 @@ export function BetaButton() {
     };
   }, []);
 
-  const handleClick = () => {
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (!acceptedPrivacy) {
+      event.preventDefault();
       return;
     }
 
@@ -52,12 +54,6 @@ export function BetaButton() {
 
     window.addEventListener("blur", markOpened);
     document.addEventListener("visibilitychange", markOpened);
-
-    const link = document.createElement("a");
-    link.href = `mailto:svobodno.app.team@yandex.com?subject=Заявка на бета-доступ&body=Привет! Хочу получить доступ к бета-версии Svobodno.`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
 
     if (timeoutRef.current !== null) {
       clearTimeout(timeoutRef.current);
@@ -81,14 +77,19 @@ export function BetaButton() {
         visible ? "animate-fade-in" : "opacity-0"
       }`}
     >
-      <button
-        type="button"
+      <a
+        href={acceptedPrivacy ? MAILTO_HREF : undefined}
+        aria-disabled={!acceptedPrivacy}
+        tabIndex={acceptedPrivacy ? 0 : -1}
         onClick={handleClick}
-        disabled={!acceptedPrivacy}
-        className="rounded-xl bg-mint px-6 py-3 font-manrope font-medium text-white transition-colors hover:bg-mint-dark disabled:cursor-not-allowed disabled:bg-mint/50 disabled:hover:bg-mint/50"
+        className={`rounded-xl bg-mint px-6 py-3 font-manrope font-medium text-white transition-colors hover:bg-mint-dark ${
+          acceptedPrivacy
+            ? ""
+            : "pointer-events-none cursor-not-allowed bg-mint/50 hover:bg-mint/50"
+        }`}
       >
         Хочу доступ к бета-версии
-      </button>
+      </a>
       {mailtoFailed ? (
         <p role="alert" className="mt-3 font-inter text-sm text-red-600">
           Не удалось открыть почтовый клиент. Напишите нам на {BETA_EMAIL}
@@ -104,7 +105,7 @@ export function BetaButton() {
         />
         <p>
           <label htmlFor="privacy-consent">Я ознакомлен с </label>
-          <a href="/privacy" className="underline decoration-graphite/30 underline-offset-2 hover:text-graphite">
+          <a href="/privacy/" className="underline decoration-graphite/30 underline-offset-2 hover:text-graphite">
             политикой конфиденциальности
           </a>
         </p>
