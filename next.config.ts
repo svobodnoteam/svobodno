@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "export",
+  assetPrefix: "",
   trailingSlash: true,
   // Скрывает букву N (индикатор Next.js) в левом нижнем углу
   devIndicators: false,
