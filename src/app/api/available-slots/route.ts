@@ -137,8 +137,6 @@ export async function GET(request: NextRequest) {
       .gte("slot_time", `${date}T00:00:00+03:00`)
       .lt("slot_time", `${date}T23:59:59+03:00`);
 
-    console.log("[slots] active bookings count:", bookings?.length);
-
     if (bookingsError) {
       return jsonError(bookingsError.message, 500);
     }

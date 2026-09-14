@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 
 const BETA_EMAIL = "svobodno.app.team@yandex.com";
 
-export function BetaSignupForm() {
+export function BetaButton() {
   const [visible, setVisible] = useState(false);
   const [mailtoFailed, setMailtoFailed] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const openedClientRef = useRef(false);
@@ -38,6 +39,10 @@ export function BetaSignupForm() {
   }, []);
 
   const handleClick = () => {
+    if (!acceptedPrivacy) {
+      return;
+    }
+
     setMailtoFailed(false);
     openedClientRef.current = false;
 
@@ -79,7 +84,8 @@ export function BetaSignupForm() {
       <button
         type="button"
         onClick={handleClick}
-        className="rounded-xl bg-mint px-6 py-3 font-manrope font-medium text-white transition-colors hover:bg-mint-dark"
+        disabled={!acceptedPrivacy}
+        className="rounded-xl bg-mint px-6 py-3 font-manrope font-medium text-white transition-colors hover:bg-mint-dark disabled:cursor-not-allowed disabled:bg-mint/50 disabled:hover:bg-mint/50"
       >
         Хочу доступ к бета-версии
       </button>
@@ -88,10 +94,21 @@ export function BetaSignupForm() {
           Не удалось открыть почтовый клиент. Напишите нам на {BETA_EMAIL}
         </p>
       ) : null}
-      <p className="mt-3 font-inter text-xs leading-relaxed text-graphite/50">
-        Ресурс не собирает персональные данные. Письмо отправляется с вашей
-        почты — вы сами контролируете отправку.
-      </p>
+      <div className="mt-3 flex items-start gap-2 text-left font-inter text-xs leading-relaxed text-graphite/50">
+        <input
+          id="privacy-consent"
+          type="checkbox"
+          checked={acceptedPrivacy}
+          onChange={(event) => setAcceptedPrivacy(event.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-mint"
+        />
+        <p>
+          <label htmlFor="privacy-consent">Я ознакомлен с </label>
+          <a href="/privacy" className="underline decoration-graphite/30 underline-offset-2 hover:text-graphite">
+            политикой конфиденциальности
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

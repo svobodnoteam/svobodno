@@ -322,7 +322,6 @@ export default function BookingForm() {
           master?: Master;
           error?: string;
         } | null;
-        console.log("master response", masterBody);
 
         if (!masterResponse.ok || !masterBody?.organization || !masterBody?.master) {
           throw new Error("Не удалось загрузить страницу записи");
@@ -341,8 +340,6 @@ export default function BookingForm() {
           workingHours?: WorkingHour[];
           error?: string;
         } | null;
-        console.log("services response", servicesBody);
-        console.log("working hours response", hoursBody);
 
         if (!servicesResponse.ok) {
           throw new Error(servicesBody?.error || "Не удалось загрузить услуги");
@@ -535,8 +532,6 @@ export default function BookingForm() {
     const details = confirmation as EnrichedBooking;
     const { organizationTitle, specialistLine } = getConfirmationParties(details);
     const serviceName = getConfirmationServiceName(details, selectedService);
-    const confirmationEmail = asNullableName(details.client_email) || asNullableName(clientEmail);
-
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-cream p-8">
         <div className="mb-6 w-full max-w-md">
@@ -562,9 +557,7 @@ export default function BookingForm() {
               {formatConfirmationDateTime(details.start_time || details.slot_time)}
             </li>
             <li>Бронь #{details.id}</li>
-            {confirmationEmail ? (
-              <li>Подтверждение отправлено на {confirmationEmail}</li>
-            ) : null}
+            <li>Вы записаны! Мастер свяжется с вами.</li>
           </ul>
           <button
             type="button"

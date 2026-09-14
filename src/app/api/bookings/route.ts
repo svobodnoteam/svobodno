@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jsonError, parsePositiveInt } from "@/lib/api";
+import { isValidAdminSecret, jsonError, parsePositiveInt } from "@/lib/api";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import type { Booking, BookingStatus } from "@/lib/types";
 
@@ -159,6 +160,10 @@ async function insertBookingRow(admin: ReturnType<typeof getSupabaseAdmin>, payl
 }
 
 export async function POST(request: Request) {
+  if (isRateLimited(getClientIp(request))) {
+    return jsonError("Слишком много запросов", 429);
+  }
+
   let body: unknown;
 
   try {
@@ -286,6 +291,11 @@ export async function POST(request: Request) {
     }
 
     const typedService = service as BookingRow;
+    const serviceMasterId = readPositiveInt(typedService, ["master_id"]);
+    if (serviceMasterId !== master.id) {
+      return jsonError("Услуга не принадлежит этому мастеру", 400);
+    }
+
     const durationMin = serviceDurationMin(typedService);
     const serviceType = serviceTypeName(typedService);
 
@@ -299,7 +309,6 @@ export async function POST(request: Request) {
     const newStartMs = startTime.getTime();
     const newEndMs = endTime.getTime();
 
-    console.log("[POST] conflict check for:", master.id, startIso, endIso);
     const { data: existingRows, error: existingError } = await admin
       .from("bookings")
       .select("*")
@@ -311,7 +320,6 @@ export async function POST(request: Request) {
     }
 
     const existingBookings = (existingRows ?? []) as BookingRow[];
-    console.log("[POST] existing bookings:", existingBookings.length);
 
     const hasOverlap = existingBookings.some((row) => {
       const existingStart =
@@ -328,7 +336,6 @@ export async function POST(request: Request) {
       return jsonError("Это время уже занято", 409);
     }
 
-    console.log("[POST] inserting with start_time:", startIso, "end_time:", endIso);
     const insertPayload: Record<string, unknown> = {
       organization_id: master.organization_id ?? null,
       master_id: master.id,
@@ -405,6 +412,10 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: NextRequest) {
+  if (!isValidAdminSecret(request)) {
+    return jsonError("Доступ запрещён", 403);
+  }
+
   const orgId = parsePositiveInt(request.nextUrl.searchParams.get("orgId"));
   const masterId = parsePositiveInt(request.nextUrl.searchParams.get("masterId"));
 
@@ -426,8 +437,6 @@ export async function GET(request: NextRequest) {
     }
 
     const { data, error } = await query;
-
-    console.log("[GET] bookings:", data?.length, "first status:", data?.[0]?.status);
 
     if (error) {
       return jsonError(error.message, 500);
@@ -479,6 +488,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  if (!isValidAdminSecret(request)) {
+    return jsonError("Доступ запрещён", 403);
+  }
+
   const id = parsePositiveInt(request.nextUrl.searchParams.get("id"));
 
   if (!id) {
@@ -488,8 +501,6 @@ export async function PATCH(request: NextRequest) {
   try {
     const admin = getSupabaseAdmin();
 
-    console.log("[PATCH] updating booking:", id);
-
     const { data, error } = await admin
       .from("bookings")
       .update({
@@ -498,8 +509,6 @@ export async function PATCH(request: NextRequest) {
       })
       .eq("id", id)
       .select();
-
-    console.log("[PATCH] result:", data, "error:", error);
 
     if (error) {
       return jsonError(error.message, 500);

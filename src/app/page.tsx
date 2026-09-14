@@ -1,4 +1,4 @@
-import { BetaSignupForm } from "@/components/BetaSignupForm";
+import { BetaButton } from "@/components/beta-button";
 import { Logo } from "@/components/Logo";
 import PoweredByBadge from "@/components/PoweredByBadge";
 
@@ -13,7 +13,7 @@ export default function Home() {
         <p className="font-inter text-base text-graphite/60 mt-2 max-w-md">
           Онлайн-запись нового поколения для вашего бизнеса
         </p>
-        <BetaSignupForm />
+        <BetaButton />
       </div>
       <PoweredByBadge />
     </main>

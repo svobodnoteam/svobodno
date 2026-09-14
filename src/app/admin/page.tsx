@@ -38,7 +38,6 @@ function parsePositiveInt(value: string | null): number | null {
 }
 
 function playSound(type: "new" | "cancel") {
-  console.log("[playSound]", type);
   const src = type === "cancel" ? "/sound-cancel.ogg" : "/sound-new.wav";
   const audio = new Audio(src);
   audio.volume = 1.0;
@@ -46,15 +45,63 @@ function playSound(type: "new" | "cancel") {
   audio.currentTime = 0;
   void audio
     .play()
-    .then(() => console.log("[playSound] OK:", src))
     .catch((err) => console.warn("[playSound] blocked:", err));
 }
 
 function AdminPageContent() {
   const searchParams = useSearchParams();
   const orgId = parsePositiveInt(searchParams.get("orgId"));
-  const masterId = parsePositiveInt(searchParams.get("masterId"));
+  const masterIdFromQuery = parsePositiveInt(searchParams.get("masterId"));
+  const slug = searchParams.get("slug")?.trim() || "";
+  const lookupSlug = !orgId && !masterIdFromQuery ? slug || "anton" : "";
+
+  const [resolvedMasterId, setResolvedMasterId] = useState<number | null>(null);
+  const [resolveError, setResolveError] = useState("");
+
+  useEffect(() => {
+    if (!lookupSlug) {
+      setResolvedMasterId(null);
+      setResolveError("");
+      return;
+    }
+
+    let cancelled = false;
+
+    async function resolveMaster() {
+      setResolveError("");
+      setResolvedMasterId(null);
+
+      try {
+        const response = await fetch(`/api/master?slug=${encodeURIComponent(lookupSlug)}`);
+        const body = (await response.json().catch(() => null)) as {
+          master?: { id?: number };
+          error?: string;
+        } | null;
+
+        if (!response.ok || typeof body?.master?.id !== "number") {
+          throw new Error(body?.error || "Мастер не найден");
+        }
+
+        if (!cancelled) {
+          setResolvedMasterId(body.master.id);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setResolveError(error instanceof Error ? error.message : "Мастер не найден");
+        }
+      }
+    }
+
+    void resolveMaster();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lookupSlug]);
+
+  const masterId = masterIdFromQuery ?? resolvedMasterId;
   const isOrgMode = orgId != null;
+  const isResolvingSlug = Boolean(lookupSlug) && resolvedMasterId == null && !resolveError;
   const scopeId = isOrgMode ? orgId : masterId;
   const bookingsQuery = useMemo(() => {
     if (isOrgMode) {
@@ -69,7 +116,7 @@ function AdminPageContent() {
   }, [isOrgMode, masterId, orgId]);
 
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [isLoading, setIsLoading] = useState(Boolean(bookingsQuery));
+  const [isLoading, setIsLoading] = useState(Boolean(bookingsQuery) || Boolean(lookupSlug));
   const [hasError, setHasError] = useState(false);
   const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
   const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
@@ -323,7 +370,6 @@ function AdminPageContent() {
         ),
       );
       playSound("cancel");
-      console.log("[cancel] booking cancelled:", booking.id);
     } catch {
       alert("Не удалось отменить запись");
     }
@@ -350,8 +396,12 @@ function AdminPageContent() {
               {scopeId
                 ? isOrgMode
                   ? `Организация #${orgId}`
-                  : `Мастер #${masterId}`
-                : "Укажите ?orgId=N или ?masterId=N"}
+                  : lookupSlug
+                    ? `${lookupSlug} · мастер #${masterId}`
+                    : `Мастер #${masterId}`
+                : isResolvingSlug
+                  ? "Ищем мастера…"
+                  : "Укажите ?slug=anton, ?orgId=N или ?masterId=N"}
             </p>
           </div>
         </div>
@@ -367,7 +417,13 @@ function AdminPageContent() {
       </div>
 
       {!bookingsQuery ? (
-        <p>Укажите параметр orgId или masterId в адресе страницы</p>
+        <p>
+          {resolveError
+            ? resolveError
+            : isResolvingSlug
+              ? "Загрузка…"
+              : "Укажите параметр slug, orgId или masterId в адресе страницы"}
+        </p>
       ) : isLoading ? (
         <p>Загрузка…</p>
       ) : hasError ? (

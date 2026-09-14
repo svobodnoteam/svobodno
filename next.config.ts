@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // Скрывает букву N (индикатор Next.js) в левом нижнем углу
   devIndicators: false,
   async rewrites() {
